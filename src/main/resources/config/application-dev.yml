@@ -1,0 +1,10 @@
+server:
+  error:
+    include-exception: true
+    include-stacktrace: always
+spring:
+  flyway:
+    validate-on-migrate: false
+logging:
+  level:
+    org.jooq: DEBUG
