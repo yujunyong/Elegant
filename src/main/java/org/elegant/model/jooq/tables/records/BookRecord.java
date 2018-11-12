@@ -29,7 +29,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class BookRecord extends UpdatableRecordImpl<BookRecord> implements Record14<Integer, String, Integer, String, String, String, LocalDateTime, Short, Long, Long, Short, String, LocalDateTime, LocalDateTime> {
 
-    private static final long serialVersionUID = 409680720;
+    private static final long serialVersionUID = -235039442;
 
     /**
      * Setter for <code>PUBLIC.book.book_id</code>. 书本id
@@ -227,7 +227,7 @@ public class BookRecord extends UpdatableRecordImpl<BookRecord> implements Recor
     }
 
     /**
-     * Setter for <code>PUBLIC.book.update_time</code>.
+     * Setter for <code>PUBLIC.book.update_time</code>. 更新时间
      */
     public BookRecord setUpdateTime(LocalDateTime value) {
         set(13, value);
@@ -235,7 +235,7 @@ public class BookRecord extends UpdatableRecordImpl<BookRecord> implements Recor
     }
 
     /**
-     * Getter for <code>PUBLIC.book.update_time</code>.
+     * Getter for <code>PUBLIC.book.update_time</code>. 更新时间
      */
     public LocalDateTime getUpdateTime() {
         return (LocalDateTime) get(13);

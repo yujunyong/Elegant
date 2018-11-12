@@ -29,7 +29,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class AuthorRecord extends UpdatableRecordImpl<AuthorRecord> implements Record4<Integer, String, LocalDateTime, LocalDateTime> {
 
-    private static final long serialVersionUID = 724091489;
+    private static final long serialVersionUID = 1725017681;
 
     /**
      * Setter for <code>PUBLIC.author.author_id</code>. 作者id
@@ -77,7 +77,7 @@ public class AuthorRecord extends UpdatableRecordImpl<AuthorRecord> implements R
     }
 
     /**
-     * Setter for <code>PUBLIC.author.update_time</code>.
+     * Setter for <code>PUBLIC.author.update_time</code>. 更新时间
      */
     public AuthorRecord setUpdateTime(LocalDateTime value) {
         set(3, value);
@@ -85,7 +85,7 @@ public class AuthorRecord extends UpdatableRecordImpl<AuthorRecord> implements R
     }
 
     /**
-     * Getter for <code>PUBLIC.author.update_time</code>.
+     * Getter for <code>PUBLIC.author.update_time</code>. 更新时间
      */
     public LocalDateTime getUpdateTime() {
         return (LocalDateTime) get(3);

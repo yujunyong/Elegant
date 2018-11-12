@@ -16,10 +16,10 @@
 
     <properties>
         <itext.version>7.1.2</itext.version>
-        <database.driver>org.h2.Driver</database.driver>
-        <database.url>jdbc:h2:~/elegant;DATABASE_TO_UPPER=false</database.url>
-        <database.username>sa</database.username>
-        <database.password></database.password>
+        <db.driver>org.h2.Driver</db.driver>
+        <db.url>jdbc:h2:~/elegant;DATABASE_TO_UPPER=false</db.url>
+        <db.username>sa</db.username>
+        <db.password></db.password>
     </properties>
 
     <dependencies>
@@ -146,16 +146,16 @@
                         <artifactId>flyway-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <phase>package</phase>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>migrate</goal>
                                 </goals>
                             </execution>
                         </executions>
                         <configuration>
-                            <url>${database.url}</url>
-                            <user>${database.username}</user>
-                            <password>${database.password}</password>
+                            <url>${db.url}</url>
+                            <user>${db.username}</user>
+                            <password>${db.password}</password>
                             <validateOnMigrate>false</validateOnMigrate>
                             <locations>
                                 <location>filesystem:${basedir}/src/main/resources/db/migration/h2/</location>
@@ -167,7 +167,7 @@
                         <artifactId>jooq-codegen-maven</artifactId>
                         <executions>
                             <execution>
-                                <phase>package</phase>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>generate</goal>
                                 </goals>
@@ -182,10 +182,10 @@
                         </dependencies>
                         <configuration>
                             <jdbc>
-                                <driver>${database.driver}</driver>
-                                <url>${database.url}</url>
-                                <user>${database.username}</user>
-                                <password>${database.password}</password>
+                                <driver>${db.driver}</driver>
+                                <url>${db.url}</url>
+                                <user>${db.username}</user>
+                                <password>${db.password}</password>
                             </jdbc>
 
                             <generator>

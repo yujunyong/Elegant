@@ -29,7 +29,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class DirectoryRecord extends UpdatableRecordImpl<DirectoryRecord> implements Record4<Integer, String, LocalDateTime, LocalDateTime> {
 
-    private static final long serialVersionUID = -578835317;
+    private static final long serialVersionUID = -1649046373;
 
     /**
      * Setter for <code>PUBLIC.directory.dir_id</code>. 目录id
@@ -77,7 +77,7 @@ public class DirectoryRecord extends UpdatableRecordImpl<DirectoryRecord> implem
     }
 
     /**
-     * Setter for <code>PUBLIC.directory.update_time</code>.
+     * Setter for <code>PUBLIC.directory.update_time</code>. 更新时间
      */
     public DirectoryRecord setUpdateTime(LocalDateTime value) {
         set(3, value);
@@ -85,7 +85,7 @@ public class DirectoryRecord extends UpdatableRecordImpl<DirectoryRecord> implem
     }
 
     /**
-     * Getter for <code>PUBLIC.directory.update_time</code>.
+     * Getter for <code>PUBLIC.directory.update_time</code>. 更新时间
      */
     public LocalDateTime getUpdateTime() {
         return (LocalDateTime) get(3);

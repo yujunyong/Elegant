@@ -29,7 +29,7 @@ import org.jooq.impl.UpdatableRecordImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class PropertyRecord extends UpdatableRecordImpl<PropertyRecord> implements Record4<String, String, LocalDateTime, LocalDateTime> {
 
-    private static final long serialVersionUID = -532656899;
+    private static final long serialVersionUID = -1326627819;
 
     /**
      * Setter for <code>PUBLIC.property.prop_name</code>. 属性名称
@@ -77,7 +77,7 @@ public class PropertyRecord extends UpdatableRecordImpl<PropertyRecord> implemen
     }
 
     /**
-     * Setter for <code>PUBLIC.property.update_time</code>.
+     * Setter for <code>PUBLIC.property.update_time</code>. 更新时间
      */
     public PropertyRecord setUpdateTime(LocalDateTime value) {
         set(3, value);
@@ -85,7 +85,7 @@ public class PropertyRecord extends UpdatableRecordImpl<PropertyRecord> implemen
     }
 
     /**
-     * Getter for <code>PUBLIC.property.update_time</code>.
+     * Getter for <code>PUBLIC.property.update_time</code>. 更新时间
      */
     public LocalDateTime getUpdateTime() {
         return (LocalDateTime) get(3);

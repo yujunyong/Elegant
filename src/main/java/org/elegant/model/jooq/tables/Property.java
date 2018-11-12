@@ -40,7 +40,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Property extends TableImpl<PropertyRecord> {
 
-    private static final long serialVersionUID = 1571753133;
+    private static final long serialVersionUID = -2071137957;
 
     /**
      * The reference instance of <code>PUBLIC.property</code>
@@ -71,9 +71,9 @@ public class Property extends TableImpl<PropertyRecord> {
     public final TableField<PropertyRecord, LocalDateTime> CREATE_TIME = createField("create_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "创建时间");
 
     /**
-     * The column <code>PUBLIC.property.update_time</code>.
+     * The column <code>PUBLIC.property.update_time</code>. 更新时间
      */
-    public final TableField<PropertyRecord, LocalDateTime> UPDATE_TIME = createField("update_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "");
+    public final TableField<PropertyRecord, LocalDateTime> UPDATE_TIME = createField("update_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "更新时间");
 
     /**
      * Create a <code>PUBLIC.property</code> table reference

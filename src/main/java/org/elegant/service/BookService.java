@@ -3,6 +3,7 @@ package org.elegant.service;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfDocumentContentParser;
+import net.bytebuddy.asm.Advice;
 import org.elegant.model.jooq.tables.pojos.Book;
 import org.elegant.model.jooq.tables.pojos.BookCover;
 import org.elegant.processor.pdf.listener.ImageListener;
@@ -18,6 +19,8 @@ import reactor.core.publisher.Mono;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -112,11 +115,16 @@ public class BookService {
         checkNotNull(books);
         checkArgument(!books.isEmpty());
 
+        LocalDateTime now = LocalDateTime.now();
+        books.forEach(book -> book.setUpdateTime(now));
+
         bookRepository.insert(books);
     }
 
     public void addBook(Book book) {
         checkNotNull(book);
+
+        book.setUpdateTime(LocalDateTime.now());
         bookRepository.insert(book);
     }
 
@@ -124,6 +132,7 @@ public class BookService {
         checkNotNull(book);
         checkNotNull(book.getBookId());
 
+        book.setUpdateTime(LocalDateTime.now());
         bookRepository.update(book);
     }
 

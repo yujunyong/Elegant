@@ -40,7 +40,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class DirectoryPath extends TableImpl<DirectoryPathRecord> {
 
-    private static final long serialVersionUID = 6307973;
+    private static final long serialVersionUID = -907799897;
 
     /**
      * The reference instance of <code>PUBLIC.directory_path</code>
@@ -76,9 +76,9 @@ public class DirectoryPath extends TableImpl<DirectoryPathRecord> {
     public final TableField<DirectoryPathRecord, LocalDateTime> CREATE_TIME = createField("create_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "创建时间");
 
     /**
-     * The column <code>PUBLIC.directory_path.update_time</code>.
+     * The column <code>PUBLIC.directory_path.update_time</code>. 更新时间
      */
-    public final TableField<DirectoryPathRecord, LocalDateTime> UPDATE_TIME = createField("update_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "");
+    public final TableField<DirectoryPathRecord, LocalDateTime> UPDATE_TIME = createField("update_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "更新时间");
 
     /**
      * Create a <code>PUBLIC.directory_path</code> table reference

@@ -41,7 +41,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Directory extends TableImpl<DirectoryRecord> {
 
-    private static final long serialVersionUID = 1587249206;
+    private static final long serialVersionUID = -761857842;
 
     /**
      * The reference instance of <code>PUBLIC.directory</code>
@@ -72,9 +72,9 @@ public class Directory extends TableImpl<DirectoryRecord> {
     public final TableField<DirectoryRecord, LocalDateTime> CREATE_TIME = createField("create_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "创建时间");
 
     /**
-     * The column <code>PUBLIC.directory.update_time</code>.
+     * The column <code>PUBLIC.directory.update_time</code>. 更新时间
      */
-    public final TableField<DirectoryRecord, LocalDateTime> UPDATE_TIME = createField("update_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "");
+    public final TableField<DirectoryRecord, LocalDateTime> UPDATE_TIME = createField("update_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "更新时间");
 
     /**
      * Create a <code>PUBLIC.directory</code> table reference

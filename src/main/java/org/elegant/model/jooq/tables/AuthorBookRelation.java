@@ -40,7 +40,7 @@ import org.jooq.impl.TableImpl;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class AuthorBookRelation extends TableImpl<AuthorBookRelationRecord> {
 
-    private static final long serialVersionUID = -725692641;
+    private static final long serialVersionUID = 140662783;
 
     /**
      * The reference instance of <code>PUBLIC.author_book_relation</code>
@@ -71,9 +71,9 @@ public class AuthorBookRelation extends TableImpl<AuthorBookRelationRecord> {
     public final TableField<AuthorBookRelationRecord, LocalDateTime> CREATE_TIME = createField("create_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "创建时间");
 
     /**
-     * The column <code>PUBLIC.author_book_relation.update_time</code>.
+     * The column <code>PUBLIC.author_book_relation.update_time</code>. 更新时间
      */
-    public final TableField<AuthorBookRelationRecord, LocalDateTime> UPDATE_TIME = createField("update_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "");
+    public final TableField<AuthorBookRelationRecord, LocalDateTime> UPDATE_TIME = createField("update_time", org.jooq.impl.SQLDataType.LOCALDATETIME.defaultValue(org.jooq.impl.DSL.field("CURRENT_TIMESTAMP()", org.jooq.impl.SQLDataType.LOCALDATETIME)), this, "更新时间");
 
     /**
      * Create a <code>PUBLIC.author_book_relation</code> table reference

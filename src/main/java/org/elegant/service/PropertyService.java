@@ -11,6 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
 @Service
 public class PropertyService {
     public static final String ROOT_BOOK_DIR_KEY = "app.directory.root";
@@ -39,18 +43,28 @@ public class PropertyService {
 
     @Transactional
     public void updateProperty(Property property) {
+        checkNotNull(property);
+
+        property.setUpdateTime(LocalDateTime.now());
         propertyRepository.update(property);
+
         publisher.publishEvent(new AddPropertyEvent(property));
     }
 
     @Transactional
     public void addProperty(Property property) {
+        checkNotNull(property);
+
+        property.setUpdateTime(LocalDateTime.now());
         propertyRepository.insert(property);
+
         publisher.publishEvent(new UpdatePropertyEvent(property));
     }
 
     @Transactional
     public void deleteProperty(String propName) {
+        checkNotNull(propName);
+
         propertyRepository.deleteById(propName);
     }
 }
