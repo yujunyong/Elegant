@@ -52,4 +52,23 @@ public class DirectoryRepositoryTest {
         assertThat(ancestors.get(1).getDirId()).isEqualTo(2);
         assertThat(ancestors.get(2).getDirId()).isEqualTo(6);
     }
+
+    @Test
+    public void testFetchDescendants() {
+        List<Directory> descendants = directoryRepository.fetchDescendants(2);
+
+        assertThat(descendants.size()).isEqualTo(3);
+        assertThat(descendants.get(0).getName()).isEqualTo("dir6");
+        assertThat(descendants.get(1).getName()).isEqualTo("dir8");
+        assertThat(descendants.get(2).getName()).isEqualTo("dir7");
+    }
+
+    @Test
+    public void testFetchSubs() {
+        List<Directory> descendants = directoryRepository.fetchSubs(2);
+
+        assertThat(descendants.size()).isEqualTo(2);
+        assertThat(descendants.get(0).getName()).isEqualTo("dir6");
+        assertThat(descendants.get(1).getName()).isEqualTo("dir8");
+    }
 }

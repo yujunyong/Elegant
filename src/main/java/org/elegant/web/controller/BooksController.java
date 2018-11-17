@@ -28,12 +28,12 @@ public class BooksController {
     }
 
     @PostMapping()
-    public void addBook(@RequestBody  AddBookRequest request) {
+    public Mono<Void> addBook(@RequestBody  AddBookRequest request) {
         // todo 添加封面数据
         Book book = new Book();
         BeanUtils.copyProperties(request, book);
 
-        bookService.addBook(book);
+        return bookService.addBook(book);
     }
 
     private BookResponse convert2BookResponse(Book book) {
@@ -55,18 +55,18 @@ public class BooksController {
         }
 
         @PatchMapping()
-        public void updateBook(@PathVariable("bookId") Integer bookId, @RequestBody UpdateBookRequest request) {
+        public Mono<Void> updateBook(@PathVariable("bookId") Integer bookId, @RequestBody UpdateBookRequest request) {
             // todo 更新封面
             Book book = new Book();
             BeanUtils.copyProperties(request, book);
             book.setBookId(bookId);
-            bookService.updateBook(book);
+            return bookService.updateBook(book);
         }
 
         @DeleteMapping
-        public void deleteBook(@PathVariable("bookId") Integer bookId) {
+        public Mono<Void> deleteBook(@PathVariable("bookId") Integer bookId) {
             // todo 删除封面, 文件夹路径
-            bookService.deleteBook(bookId);
+            return bookService.deleteBook(bookId);
         }
     }
 }

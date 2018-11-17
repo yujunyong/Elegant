@@ -39,20 +39,6 @@ public class DirectoryService {
         this.propertyService = propertyService;
     }
 
-    @Transactional
-    public Mono<Directory> addDirectoryIfAbsent(Integer parentId, String name) {
-        return addDirectoryIfAbsent(parentId, new Directory().setName(name));
-    }
-
-    @Transactional
-    public Mono<Directory> addDirectoryIfAbsent(Integer parentId, Directory dir) {
-        Mono<Directory> addDirectory = Mono
-                .just((Supplier<Directory>) () ->
-                        addDirectoryWithNoCheck(parentId, dir))
-                .map(Supplier::get);
-
-        return getDirectory(parentId, dir.getName()).switchIfEmpty(addDirectory);
-    }
 
     public Mono<Directory> getDirectory(Integer parentId, String name) {
         return Mono.justOrEmpty(directoryRepository.fetchOneDirectory(parentId, name));
@@ -62,8 +48,12 @@ public class DirectoryService {
         return Mono.justOrEmpty(directoryRepository.fetchOneByDirId(dirId));
     }
 
-    public Flux<Directory> getParentDirecties(Integer dirId) {
+    public Flux<Directory> getAncestorDirecties(Integer dirId) {
         return Flux.fromIterable(directoryRepository.fetchAncestors(dirId));
+    }
+
+    public Flux<Directory> getSubDirecties(Integer dirId) {
+        return Flux.fromIterable(directoryRepository.fetchSubs(dirId));
     }
 
     public Mono<Path> getOsPath(Integer dirId) {
@@ -71,12 +61,13 @@ public class DirectoryService {
     }
 
     public Mono<Path> getOsPath(Directory dir) {
-        Mono<List<String>> parents = getParentDirecties(dir.getDirId())
+        Mono<List<String>> parents = getAncestorDirecties(dir.getDirId())
+                .concatWithValues(dir)
                 .map(Directory::getName)
                 .collectList();
-        Mono<String> rootDir = propertyService.getString(PropertyService.ROOT_BOOK_DIR_KEY);
+        Mono<String> rootPath = propertyService.getString(PropertyService.ROOT_BOOK_DIR_KEY);
 
-        return Mono.zip(parents, rootDir)
+        return Mono.zip(parents, rootPath)
                 .map(tuple2 -> {
                     List<String> p = tuple2.getT1();
                     String root = tuple2.getT2();
@@ -91,7 +82,8 @@ public class DirectoryService {
     }
 
     public Mono<String> getPath(Directory dir) {
-        return getParentDirecties(dir.getDirId())
+        return getAncestorDirecties(dir.getDirId())
+                .concatWithValues(dir)
                 .map(Directory::getName)
                 .collectList()
                 .map(parents ->
@@ -112,21 +104,45 @@ public class DirectoryService {
     }
 
     @Transactional
-    public Directory addDirectory(Integer parentId, Directory dir) {
+    public Mono<Directory> addDirectoryIfAbsent(Integer parentId, String name) {
+        return addDirectoryIfAbsent(parentId, new Directory().setName(name));
+    }
+
+    @Transactional
+    public Mono<Directory> addDirectoryIfAbsent(Integer parentId, Directory dir) {
+        Mono<Directory> addDirectory = Mono
+                .just((Supplier<Directory>) () ->
+                        addDirectoryWithNoCheck(parentId, dir))
+                .map(Supplier::get);
+
+        return getDirectory(parentId, dir.getName()).switchIfEmpty(addDirectory);
+    }
+
+    @Transactional
+    public Mono<Directory> addDirectory(Integer parentId, Directory dir) {
         checkState(getDirectory(parentId, dir.getName()).blockOptional().isPresent(), "目录已存在");
 
-        return addDirectoryWithNoCheck(parentId, dir);
+        return Mono.justOrEmpty(addDirectoryWithNoCheck(parentId, dir));
     }
 
     private Directory addDirectoryWithNoCheck(Integer parentId, Directory dir) {
         directoryRepository.insert(dir);
-        directoryPathService.getParents(parentId)
-                .map(dp -> new DirectoryPath()
-                        .setAncestor(dp.getAncestor())
+        DirectoryPath selfPath = new DirectoryPath()
+                .setAncestor(dir.getDirId())
+                .setDirId(dir.getDirId())
+                .setPathLength(0);
+        DirectoryPath parentPath = new DirectoryPath()
+                .setAncestor(parentId)
+                .setDirId(dir.getDirId())
+                .setPathLength(1);
+        directoryPathService.addDirectoryPath(selfPath, parentPath).subscribe();
+        directoryPathService.getAncestors(parentId)
+                .map(path -> new DirectoryPath()
+                        .setAncestor(path.getAncestor())
                         .setDirId(dir.getDirId())
-                        .setPathLength(dp.getPathLength() + 1))
+                        .setPathLength(path.getPathLength() + 1))
                 .buffer(200)
-                .subscribe(directoryPathService::addAll);
+                .subscribe(directoryPathService::addDirectoryPath);
         return dir;
     }
 }

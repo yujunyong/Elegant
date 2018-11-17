@@ -5,7 +5,8 @@ insert into directory(dir_id, name) values
   (4, 'dir4'),
   (5, 'dir5'),
   (6, 'dir6'),
-  (7, 'dir7');
+  (7, 'dir7'),
+  (8, 'dir8');
 
 insert into directory_path(ancestor, dir_id, path_length) values
   (1, 1, 0),

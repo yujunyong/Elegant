@@ -26,8 +26,8 @@ public class PropertiesController {
     }
 
     @PostMapping
-    public void addProperty(@RequestBody Property property) {
-        propertyService.addProperty(property);
+    public Mono<Void> addProperty(@RequestBody Property property) {
+        return propertyService.addProperty(property);
     }
 
     @RestController
@@ -40,14 +40,14 @@ public class PropertiesController {
         }
 
         @PatchMapping()
-        public void updateProperty(@PathVariable("propName") String propName, @RequestBody Property property) {
+        public Mono<Void> updateProperty(@PathVariable("propName") String propName, @RequestBody Property property) {
             property.setPropName(propName);
-            propertyService.updateProperty(property);
+            return propertyService.updateProperty(property);
         }
 
         @DeleteMapping()
-        public void deleteProperty(@PathVariable("propName") String propName) {
-            propertyService.deleteProperty(propName);
+        public Mono<Void> deleteProperty(@PathVariable("propName") String propName) {
+            return propertyService.deleteProperty(propName);
         }
     }
 }

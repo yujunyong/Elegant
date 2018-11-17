@@ -45,4 +45,28 @@ public class DirectoryRepository extends DirectoryDao {
                 .orderBy(path.PATH_LENGTH.desc())
                 .fetchInto(Directory.class);
     }
+
+    public List<Directory> fetchDescendants(Integer dirId) {
+        return using(configuration())
+                .select(dir.fields())
+                .from(dir)
+                .innerJoin(path)
+                .on(dir.DIR_ID.eq(path.DIR_ID))
+                .where(path.ANCESTOR.eq(dirId))
+                .and(path.PATH_LENGTH.notEqual(0))
+                .orderBy(path.PATH_LENGTH, dir.NAME)
+                .fetchInto(Directory.class);
+    }
+
+    public List<Directory> fetchSubs(Integer dirId) {
+        return using(configuration())
+                .select(dir.fields())
+                .from(dir)
+                .innerJoin(path)
+                .on(dir.DIR_ID.eq(path.DIR_ID))
+                .where(path.ANCESTOR.eq(dirId))
+                .and(path.PATH_LENGTH.eq(1))
+                .orderBy(dir.NAME)
+                .fetchInto(Directory.class);
+    }
 }

@@ -5,6 +5,7 @@ import org.elegant.repository.DirectoryPathRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Collection;
 
@@ -17,11 +18,22 @@ public class DirectoryPathService {
         this.directoryPathRepository = directoryPathRepository;
     }
 
-    public Flux<DirectoryPath> getParents(Integer dirId) {
-        return Flux.fromIterable(directoryPathRepository.fetchByDirId(dirId));
+    public Flux<DirectoryPath> getAncestors(Integer dirId) {
+        return Flux.fromIterable(directoryPathRepository.fetchAncestors(dirId));
     }
 
-    public void addAll(Collection<DirectoryPath> directoryPaths) {
-        directoryPathRepository.insert(directoryPaths);
+    public Mono<Void> addDirectoryPath(DirectoryPath path) {
+        directoryPathRepository.insert(path);
+        return Mono.empty();
+    }
+
+    public Mono<Void> addDirectoryPath(DirectoryPath... paths) {
+        directoryPathRepository.insert(paths);
+        return Mono.empty();
+    }
+
+    public Mono<Void> addDirectoryPath(Collection<DirectoryPath> paths) {
+        directoryPathRepository.insert(paths);
+        return Mono.empty();
     }
 }
