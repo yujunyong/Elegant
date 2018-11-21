@@ -16,3 +16,12 @@ spring:
   messages:
     basename: message/app-message
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+    jmx:
+      exposure:
+        exclude: "*"
+
