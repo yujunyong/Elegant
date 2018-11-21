@@ -104,6 +104,10 @@
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>guava</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.projectreactor.addons</groupId>
+            <artifactId>reactor-extra</artifactId>
+        </dependency>
 
         <!-- 处理pdf -->
         <dependency>

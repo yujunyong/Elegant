@@ -54,46 +54,48 @@ public class DirectoryServiceTest {
         assertThat(expect.getName()).isEqualTo(subDir.getName());
     }
 
-    // todo 重写相关方法
     /**
      * 创建文件夹, 创建本身路径和父子路径
      */
-//    @Test
-//    public void testAddDirectoryIfAbsentAddParentPath() {
-//        Directory createdDir = new Directory()
-//                .setName("created")
-//                .setDirId(3);
-//        when(directoryRepository.fetchOneDirectory(1, "created")).thenReturn(null);
-//        when(directoryPathService.getAncestors(1)).thenReturn(Flux.empty());
-//
-//        directoryService.addDirectoryIfAbsent(1, createdDir).block();
-//
-//        verify(directoryRepository).insert(createdDir);
-//        verify(directoryPathService).addDirectoryPath(any(DirectoryPath.class), any(DirectoryPath.class));
-//        verify(directoryPathService, never()).addDirectoryPath(anyCollection());
-//    }
+    @Test
+    public void testAddDirectoryIfAbsentAddParentPath() {
+        Directory createdDir = new Directory()
+                .setName("created")
+                .setDirId(3);
+        when(directoryRepository.fetchOneDirectory(1, "created")).thenReturn(null);
+        when(directoryPathService.getAncestors(1)).thenReturn(Flux.empty());
+        when(directoryPathService.addDirectoryPath(any(DirectoryPath.class), any(DirectoryPath.class))).thenReturn(Mono.empty());
+
+        directoryService.addDirectoryIfAbsent(1, createdDir).block();
+
+        verify(directoryRepository).insert(createdDir);
+        verify(directoryPathService).addDirectoryPath(any(DirectoryPath.class), any(DirectoryPath.class));
+        verify(directoryPathService, never()).addDirectoryPath(anyCollection());
+    }
 
     /**
      * 创建文件夹, 创建本身路径,父子路径和祖先路径
      */
-//    @Test
-//    public void testAddDirectoryIfAbsentAddAncestorPath() {
-//        Directory createdDir = new Directory()
-//                .setName("created")
-//                .setDirId(3);
-//        DirectoryPath path = new DirectoryPath()
-//                .setAncestor(1)
-//                .setDirId(2)
-//                .setPathLength(1);
-//        when(directoryRepository.fetchOneDirectory(1, "created")).thenReturn(null);
-//        when(directoryPathService.getAncestors(2)).thenReturn(Flux.just(path));
-//
-//        directoryService.addDirectoryIfAbsent(2, createdDir).block();
-//
-//        verify(directoryRepository).insert(createdDir);
-//        verify(directoryPathService).addDirectoryPath(any(DirectoryPath.class), any(DirectoryPath.class));
-//        verify(directoryPathService).addDirectoryPath(anyCollection());
-//    }
+    @Test
+    public void testAddDirectoryIfAbsentAddAncestorPath() {
+        Directory createdDir = new Directory()
+                .setName("created")
+                .setDirId(3);
+        DirectoryPath path = new DirectoryPath()
+                .setAncestor(1)
+                .setDirId(2)
+                .setPathLength(1);
+        when(directoryRepository.fetchOneDirectory(1, "created")).thenReturn(null);
+        when(directoryPathService.getAncestors(2)).thenReturn(Flux.just(path));
+        when(directoryPathService.addDirectoryPath(any(DirectoryPath.class), any(DirectoryPath.class))).thenReturn(Mono.empty());
+        when(directoryPathService.addDirectoryPath(anyCollection())).thenReturn(Mono.empty());
+
+        directoryService.addDirectoryIfAbsent(2, createdDir).block();
+
+        verify(directoryRepository).insert(createdDir);
+        verify(directoryPathService).addDirectoryPath(any(DirectoryPath.class), any(DirectoryPath.class));
+        verify(directoryPathService).addDirectoryPath(anyCollection());
+    }
 
     @Test
     public void testGetOsPath() {

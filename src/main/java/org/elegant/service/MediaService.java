@@ -4,6 +4,9 @@ import org.elegant.model.jooq.tables.pojos.BookCover;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+
+import static reactor.core.scheduler.Schedulers.elastic;
 
 @Service
 public class MediaService {
@@ -15,6 +18,8 @@ public class MediaService {
     }
 
     public Mono<BookCover> getBookCover(Integer bookId) {
-        return bookService.getBookCover(bookId);
+        return Mono.just(bookId)
+                .flatMap(id -> bookService.getBookCover(bookId))
+                .subscribeOn(elastic());
     }
 }

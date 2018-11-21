@@ -6,8 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Collection;
+
+import static reactor.core.scheduler.Schedulers.elastic;
+import static reactor.core.scheduler.Schedulers.resetFactory;
 
 @Service
 public class DirectoryPathService {
@@ -19,21 +23,31 @@ public class DirectoryPathService {
     }
 
     public Flux<DirectoryPath> getAncestors(Integer dirId) {
-        return Flux.fromIterable(directoryPathRepository.fetchAncestors(dirId));
+        return Mono.just(dirId)
+                .flatMapIterable(id -> directoryPathRepository.fetchAncestors(id))
+                .subscribeOn(elastic());
     }
 
     public Mono<Void> addDirectoryPath(DirectoryPath path) {
-        directoryPathRepository.insert(path);
-        return Mono.empty();
+        return Mono.just(path)
+                .doOnNext(directoryPathRepository::insert)
+                .subscribeOn(elastic())
+                .then();
     }
 
     public Mono<Void> addDirectoryPath(DirectoryPath... paths) {
-        directoryPathRepository.insert(paths);
-        return Mono.empty();
+        return Flux.fromArray(paths)
+                .buffer(200)
+                .doOnNext(directoryPathRepository::insert)
+                .subscribeOn(elastic())
+                .then();
     }
 
     public Mono<Void> addDirectoryPath(Collection<DirectoryPath> paths) {
-        directoryPathRepository.insert(paths);
-        return Mono.empty();
+        return Flux.fromIterable(paths)
+                .buffer(200)
+                .doOnNext(directoryPathRepository::insert)
+                .subscribeOn(elastic())
+                .then();
     }
 }

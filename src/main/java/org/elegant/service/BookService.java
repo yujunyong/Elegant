@@ -19,8 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -33,6 +35,8 @@ import java.util.Objects;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.elegant.enumeration.BookFormatEnum.PDF;
+import static reactor.core.scheduler.Schedulers.elastic;
+import static reactor.core.scheduler.Schedulers.resetFactory;
 
 @Service
 public class BookService {
@@ -55,20 +59,30 @@ public class BookService {
     }
 
     public Mono<Book> getBook(Integer bookId) {
-        return Mono.justOrEmpty(bookRepository.fetchOneByBookId(bookId));
+        return Mono.just(bookId)
+                .flatMap(id -> Mono.justOrEmpty(bookRepository.fetchOneByBookId(id)))
+                .subscribeOn(elastic());
     }
 
     public Mono<Book> getBook(Integer dirId, String title) {
-        return Mono.justOrEmpty(bookRepository.fetchOneByDirIdAndTitle(dirId, title));
+        checkNotNull(dirId);
+        checkNotNull(title);
+
+        return Mono.justOrEmpty(bookRepository.fetchOneByDirIdAndTitle(dirId, title))
+                .subscribeOn(elastic());
     }
 
     public Mono<BookCover> getBookCover(Integer bookId) {
-        return Mono.justOrEmpty(bookCoverRepository.fetchOneByBookId(bookId));
+        return Mono.just(bookId)
+                .flatMap(id -> Mono.justOrEmpty(bookCoverRepository.fetchOneByBookId(id)))
+                .subscribeOn(elastic());
     }
 
     public Flux<Book> getBooksByDirId(Integer dirId) {
-        return Flux.fromIterable(bookRepository.fetchByDirId(dirId))
-                .sort(Comparator.comparing(Book::getTitle));
+        return Mono.just(dirId)
+                .flatMapIterable(id -> bookRepository.fetchByDirId(id))
+                .sort(Comparator.comparing(Book::getTitle))
+                .subscribeOn(elastic());
     }
 
     public Mono<Path> getOsPath(Integer bookId) {
@@ -104,7 +118,7 @@ public class BookService {
     }
 
     public Mono<Void> updateCover(Book book) {
-        return getOsPath(book).flatMap(path -> {
+        return getOsPath(book).doOnNext(path -> {
             try {
                 PdfDocument document = new PdfDocument(new PdfReader(path.toFile()));
 
@@ -116,16 +130,15 @@ public class BookService {
             } catch (Throwable t) {
                 logger.error(String.format("update book(%s) cover failed", book.getBookId()), t);
             }
-            return Mono.empty();
-        });
+        }).subscribeOn(elastic()).then();
     }
 
     public Mono<Void> addBookCover(Collection<Book> books) {
-        return Flux.fromIterable(books).doOnNext(this::addBookCover).then();
+        return Flux.fromIterable(books).flatMap(this::addBookCover).then();
     }
 
     public Mono<Void> addBookCover(Book book) {
-        return getOsPath(book).flatMap(path -> {
+        return getOsPath(book).doOnNext(path -> {
             try {
                 PdfDocument document = new PdfDocument(new PdfReader(path.toFile()));
 
@@ -137,9 +150,7 @@ public class BookService {
             } catch (Throwable t) {
                 logger.error(String.format("add book(%s) cover failed", book.getBookId()), t);
             }
-
-            return Mono.empty();
-        });
+        }).subscribeOn(elastic()).then();
     }
 
     private BookCover convert2BookCover(PdfImageXObject image, Integer bookId) {
@@ -173,10 +184,7 @@ public class BookService {
                             return book;
                         })
                         .buffer(200)
-                        .doOnNext(bs -> {
-                            addBook(bs);
-                            addBookCover(bs);
-                        })
+                        .flatMap(bs -> addBook(bs).thenMany(Flux.fromIterable(bs)).flatMap(this::addBookCover))
                         .then());
 
             // 同步子文件夹下数据
@@ -195,39 +203,40 @@ public class BookService {
     }
 
     public Mono<Void> addBook(Collection<Book> books) {
-        checkNotNull(books);
-        checkArgument(!books.isEmpty());
-
-        bookRepository.insert(books);
-        return Mono.empty();
+        return Flux.fromIterable(books)
+                .buffer(200)
+                .doOnNext(bookRepository::insert)
+                .subscribeOn(elastic())
+                .then();
     }
 
     public Mono<Void> addBook(Book book) {
-        checkNotNull(book);
-
-        bookRepository.insert(book);
-        return Mono.empty();
+        return Mono.just(book)
+                .doOnNext(bookRepository::insert)
+                .subscribeOn(elastic())
+                .then();
     }
 
     public Mono<Void> updateBook(Book book) {
-        checkNotNull(book);
-        checkNotNull(book.getBookId());
-
-        book.setUpdateTime(LocalDateTime.now());
-        bookRepository.update(book);
-        return Mono.empty();
+        return Mono.just(book)
+                .doOnNext(b -> b.setUpdateTime(LocalDateTime.now()))
+                .doOnNext(bookRepository::update)
+                .subscribeOn(elastic())
+                .then();
     }
 
     public Mono<Void> deleteBook(Integer bookId) {
-        bookRepository.deleteById(bookId);
-        return Mono.empty();
+        return Mono.just(bookId)
+                .doOnNext(bookRepository::deleteById)
+                .subscribeOn(elastic())
+                .then();
     }
 
     @EventListener
     @Transactional
     public void processAddRootDirectoryPropertyEvent(AddPropertyEvent event) {
         if (isRootDirectoryProperty(event.getProperty())) {
-            syncOsFile2Db();
+            syncOsFile2Db().subscribe();
         }
     }
 
@@ -235,7 +244,7 @@ public class BookService {
     @Transactional
     public void processUpdateRootDirectoryPropertyEvent(UpdatePropertyEvent event) {
         if (isRootDirectoryProperty(event.getProperty())) {
-            syncOsFile2Db();
+            syncOsFile2Db().subscribe();
         }
     }
 

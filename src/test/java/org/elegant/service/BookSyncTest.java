@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
+import reactor.core.publisher.Hooks;
 
 import java.util.List;
 
@@ -33,6 +34,7 @@ public class BookSyncTest {
     public void setup() {
         String root = getPath("book/pdf").toString();
         jdbcTemplate.update("insert into property(prop_name, prop_value) values ('app.directory.root', ?)", root);
+        Hooks.onOperatorDebug();
     }
 
     @Test
@@ -53,6 +55,7 @@ public class BookSyncTest {
         assertThat(subDirs.get(1).getName()).isEqualTo("dir3");
 
         assertThat(jdbcTemplate.queryForList("select * from book").size()).isEqualTo(6);
+        assertThat(jdbcTemplate.queryForList("select * from book_cover").size()).isEqualTo(5);
         assertThat(jdbcTemplate.queryForList("select * from directory").size()).isEqualTo(7);
         assertThat(jdbcTemplate.queryForList("select * from directory_path").size()).isEqualTo(19);
     }

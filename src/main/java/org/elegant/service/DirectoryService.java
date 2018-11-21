@@ -110,10 +110,8 @@ public class DirectoryService {
 
     @Transactional
     public Mono<Directory> addDirectoryIfAbsent(Integer parentId, Directory dir) {
-        Mono<Directory> addDirectory = Mono
-                .just((Supplier<Directory>) () ->
-                        addDirectoryWithNoCheck(parentId, dir))
-                .map(Supplier::get);
+        Mono<Directory> addDirectory = Mono.fromSupplier(() -> addDirectoryWithNoCheck(parentId, dir))
+                .flatMap(it -> it);
 
         return getDirectory(parentId, dir.getName()).switchIfEmpty(addDirectory);
     }
@@ -122,10 +120,10 @@ public class DirectoryService {
     public Mono<Directory> addDirectory(Integer parentId, Directory dir) {
         checkState(getDirectory(parentId, dir.getName()).blockOptional().isPresent(), "目录已存在");
 
-        return Mono.justOrEmpty(addDirectoryWithNoCheck(parentId, dir));
+        return addDirectoryWithNoCheck(parentId, dir);
     }
 
-    private Directory addDirectoryWithNoCheck(Integer parentId, Directory dir) {
+    private Mono<Directory> addDirectoryWithNoCheck(Integer parentId, Directory dir) {
         directoryRepository.insert(dir);
         DirectoryPath selfPath = new DirectoryPath()
                 .setAncestor(dir.getDirId())
@@ -135,14 +133,17 @@ public class DirectoryService {
                 .setAncestor(parentId)
                 .setDirId(dir.getDirId())
                 .setPathLength(1);
-        directoryPathService.addDirectoryPath(selfPath, parentPath).subscribe();
-        directoryPathService.getAncestors(parentId)
+        Mono<Void> addSelfParentPaths = directoryPathService.addDirectoryPath(selfPath, parentPath).then();
+
+        Mono<Void> addAncestorPaths = directoryPathService.getAncestors(parentId)
                 .map(path -> new DirectoryPath()
                         .setAncestor(path.getAncestor())
                         .setDirId(dir.getDirId())
                         .setPathLength(path.getPathLength() + 1))
                 .buffer(200)
-                .subscribe(directoryPathService::addDirectoryPath);
-        return dir;
+                .flatMap(directoryPathService::addDirectoryPath)
+                .then();
+
+        return addSelfParentPaths.then(addAncestorPaths).thenReturn(dir);
     }
 }

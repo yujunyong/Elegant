@@ -12,10 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static reactor.core.scheduler.Schedulers.elastic;
+import static reactor.core.scheduler.Schedulers.resetFactory;
 
 @Service
 public class PropertyService {
@@ -33,12 +36,15 @@ public class PropertyService {
 
 //    @Cacheable("property")
     public Flux<Property> getProperties() {
-        return Flux.fromIterable(propertyRepository.findAll());
+        return Flux.fromIterable(propertyRepository.findAll())
+                .subscribeOn(elastic());
     }
 
 //    @Cacheable("property")
     public Mono<Property> getProperty(String propName) {
-        return Mono.justOrEmpty(propertyRepository.fetchOneByPropName(propName));
+        return Mono.just(propName)
+                .flatMap(id -> Mono.justOrEmpty(propertyRepository.fetchOneByPropName(propName)))
+                .subscribeOn(elastic());
     }
 
     public Mono<String> getString(String propName) {
@@ -48,31 +54,29 @@ public class PropertyService {
 //    @CacheEvict(value = "property", key = "#property.propName")
     @Transactional
     public Mono<Void> updateProperty(Property property) {
-        checkNotNull(property);
-
-        property.setUpdateTime(LocalDateTime.now());
-        propertyRepository.update(property);
-
-        publisher.publishEvent(new AddPropertyEvent(property));
-        return Mono.empty();
+        return Mono.just(property)
+                .doOnNext(p -> p.setUpdateTime(LocalDateTime.now()))
+                .doOnNext(propertyRepository::update)
+                .doOnNext(p -> publisher.publishEvent(new AddPropertyEvent(property)))
+                .subscribeOn(elastic())
+                .then();
     }
 
     @Transactional
     public Mono<Void> addProperty(Property property) {
-        checkNotNull(property);
-
-        propertyRepository.insert(property);
-
-        publisher.publishEvent(new UpdatePropertyEvent(property));
-        return Mono.empty();
+        return Mono.just(property)
+                .doOnNext(propertyRepository::insert)
+                .doOnNext(p -> publisher.publishEvent(new UpdatePropertyEvent(property)))
+                .subscribeOn(elastic())
+                .then();
     }
 
 //    @CacheEvict("property")
     @Transactional
     public Mono<Void> deleteProperty(String propName) {
-        checkNotNull(propName);
-
-        propertyRepository.deleteById(propName);
-        return Mono.empty();
+        return Mono.just(propName)
+                .doOnNext(propertyRepository::deleteById)
+                .subscribeOn(elastic())
+                .then();
     }
 }
