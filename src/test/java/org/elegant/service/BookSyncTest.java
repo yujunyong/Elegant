@@ -1,6 +1,7 @@
 package org.elegant.service;
 
 import org.elegant.model.jooq.tables.pojos.Book;
+import org.elegant.model.jooq.tables.pojos.BookCover;
 import org.elegant.model.jooq.tables.pojos.Directory;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +13,11 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Hooks;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,5 +64,40 @@ public class BookSyncTest {
         assertThat(jdbcTemplate.queryForList("select * from book_cover").size()).isEqualTo(5);
         assertThat(jdbcTemplate.queryForList("select * from directory").size()).isEqualTo(7);
         assertThat(jdbcTemplate.queryForList("select * from directory_path").size()).isEqualTo(19);
+    }
+
+    @Test
+    public void testAddBookCoverSuccess() throws IOException {
+        Book book = new Book()
+                .setDirId(1)
+                .setTitle("Vuex Concepts The Flux Application Architecture for Vue.js")
+                .setFormat("pdf")
+                .setDirId(1);
+        bookService.addBook(book).block();
+        bookService.addBookCover(book).block();
+        BookCover cover = bookService.getBookCover(1).block();
+
+        assertThat(cover).isNotNull();
+
+        ByteArrayInputStream in = new ByteArrayInputStream(cover.getCover());
+        Iterator<ImageReader> iterator = ImageIO.getImageReaders(ImageIO.createImageInputStream(in));
+        if (iterator.hasNext()) {
+            ImageReader reader = iterator.next();
+            assertThat(reader.getFormatName()).isEqualTo("JPEG");
+        }
+    }
+
+    @Test
+    public void testAddBookCoverFailed() {
+        Book book = new Book()
+                .setDirId(1)
+                .setTitle("The Art of Code")
+                .setFormat("pdf")
+                .setDirId(1);
+        bookService.addBook(book).block();
+        bookService.addBookCover(book).block();
+        BookCover cover = bookService.getBookCover(1).block();
+
+        assertThat(cover).isNull();
     }
 }

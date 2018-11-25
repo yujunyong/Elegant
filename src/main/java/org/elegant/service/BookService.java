@@ -4,8 +4,10 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfDocumentContentParser;
 import com.itextpdf.kernel.pdf.xobject.PdfImageXObject;
+import net.coobird.thumbnailator.Thumbnails;
 import org.elegant.event.property.AddPropertyEvent;
 import org.elegant.event.property.UpdatePropertyEvent;
+import org.elegant.exception.BookCoverException;
 import org.elegant.model.jooq.tables.pojos.Book;
 import org.elegant.model.jooq.tables.pojos.BookCover;
 import org.elegant.model.jooq.tables.pojos.Directory;
@@ -24,13 +26,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,6 +47,7 @@ import static reactor.core.scheduler.Schedulers.resetFactory;
 @Service
 public class BookService {
     private static final Logger logger = LoggerFactory.getLogger(BookService.class);
+    public static final String BOOK_COVER_THUMBNAILATOR_FORMAT = "jpg";
 
     private BookRepository bookRepository;
     private BookCoverRepository bookCoverRepository;
@@ -118,19 +125,7 @@ public class BookService {
     }
 
     public Mono<Void> updateCover(Book book) {
-        return getOsPath(book).doOnNext(path -> {
-            try {
-                PdfDocument document = new PdfDocument(new PdfReader(path.toFile()));
-
-                new PdfDocumentContentParser(document)
-                        .processContent(1, new ImageListener(image -> {
-                            BookCover bookCover = convert2BookCover(image, book.getBookId());
-                            bookCoverRepository.update(bookCover);
-                        }));
-            } catch (Throwable t) {
-                logger.error(String.format("update book(%s) cover failed", book.getBookId()), t);
-            }
-        }).subscribeOn(elastic()).then();
+        return processBookCover(book, bookCoverRepository::update);
     }
 
     public Mono<Void> addBookCover(Collection<Book> books) {
@@ -138,28 +133,52 @@ public class BookService {
     }
 
     public Mono<Void> addBookCover(Book book) {
-        return getOsPath(book).doOnNext(path -> {
-            try {
-                PdfDocument document = new PdfDocument(new PdfReader(path.toFile()));
-
-                new PdfDocumentContentParser(document)
-                        .processContent(1, new ImageListener(image -> {
-                            BookCover bookCover = convert2BookCover(image, book.getBookId());
-                            bookCoverRepository.insert(bookCover);
-                        }));
-            } catch (Throwable t) {
-                logger.error(String.format("add book(%s) cover failed", book.getBookId()), t);
-            }
-        }).subscribeOn(elastic()).then();
+        return processBookCover(book, bookCoverRepository::insert);
     }
 
-    private BookCover convert2BookCover(PdfImageXObject image, Integer bookId) {
-        BookCover bookCover = new BookCover();
-        bookCover.setBookId(bookId);
-        bookCover.setCover(image.getImageBytes());
-        bookCover.setImageFileExtension(image.identifyImageFileExtension());
+    private Mono<Void> processBookCover(Book book, Consumer<BookCover> consumer) {
+        return getOsPath(book).flatMap(path -> Mono.<BookCover>create(sink -> {
+            try {
+                PdfDocument document = new PdfDocument(new PdfReader(path.toFile()));
+                new PdfDocumentContentParser(document)
+                        .processContent(1, new ImageListener(image -> {
+                            convert2BookCover(image, book.getBookId())
+                                    .subscribe(sink::success, sink::error, sink::success);
+                        }));
+            } catch (Throwable t) {
+                throw Exceptions.propagate(new BookCoverException(String
+                        .format("extract book(%s) cover failed", book.getBookId()), t));
+            }
+        })
+        .doOnNext(consumer))
+        .subscribeOn(elastic())
+        .then();
+    }
 
-        return bookCover;
+    private Mono<BookCover> convert2BookCover(PdfImageXObject image, Integer bookId) {
+        return Mono.justOrEmpty(image)
+                .map(PdfImageXObject::getImageBytes)
+                .map(bytes -> {
+                    try {
+                        ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+                        ByteArrayOutputStream out = new ByteArrayOutputStream(bytes.length);
+                        Thumbnails.of(in)
+                                .size(220, 308)
+                                .outputFormat(BOOK_COVER_THUMBNAILATOR_FORMAT)
+                                .toOutputStream(out);
+
+                        BookCover bookCover = new BookCover();
+                        bookCover.setBookId(bookId);
+                        bookCover.setCover(out.toByteArray());
+                        bookCover.setImageFileExtension(BOOK_COVER_THUMBNAILATOR_FORMAT);
+
+                        return bookCover;
+                    } catch (Throwable t) {
+                        throw Exceptions.propagate(new BookCoverException(String
+                                .format("convert book(%s) cover failed", bookId), t));
+                    }
+                })
+                .onErrorResume(t -> Mono.empty());
     }
 
     public Mono<Void> syncOsFile2Db() {

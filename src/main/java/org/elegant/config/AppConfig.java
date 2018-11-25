@@ -4,16 +4,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.jooq.conf.Settings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import reactor.core.publisher.Hooks;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Configuration
-public class AppConfig {
+public class AppConfig implements InitializingBean {
+    private static final Logger logger = LoggerFactory.getLogger(AppConfig.class);
+
     @Bean
     @Primary
     public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
@@ -33,5 +43,13 @@ public class AppConfig {
         settings.setQueryTimeout(10);
         settings.setFetchSize(1000);
         return settings;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        Hooks.onOperatorError((t, d) -> {
+            logger.error("have a error", t);
+            return t;
+        });
     }
 }

@@ -66,4 +66,5 @@ public class BookServiceTest {
 
         assertThat(path).isEqualTo("/book/pdf/The Art of Code.pdf");
     }
+
 }

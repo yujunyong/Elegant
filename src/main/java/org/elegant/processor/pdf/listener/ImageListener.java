@@ -27,14 +27,18 @@ public class ImageListener implements IEventListener {
 
     @Override
     public void eventOccurred(IEventData data, EventType type) {
-        ImageRenderInfo imageInfo = (ImageRenderInfo)data;
-        PdfImageXObject image = imageInfo.getImage();
+        if (data instanceof ImageRenderInfo) {
+            ImageRenderInfo imageInfo = (ImageRenderInfo)data;
+            PdfImageXObject image = imageInfo.getImage();
 
-        consumer.accept(image);
+            consumer.accept(image);
+        } else {
+            consumer.accept(null);
+        }
     }
 
     @Override
     public Set<EventType> getSupportedEvents() {
-        return Sets.newHashSet(EventType.RENDER_IMAGE);
+        return Sets.newHashSet(EventType.values());
     }
 }

@@ -1,6 +1,5 @@
 package org.elegant.web.controller;
 
-import org.elegant.model.jooq.tables.pojos.BookCover;
 import org.elegant.service.MediaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
