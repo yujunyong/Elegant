@@ -3,12 +3,14 @@ package org.elegant.service;
 import org.elegant.model.jooq.tables.pojos.Book;
 import org.elegant.model.jooq.tables.pojos.BookCover;
 import org.elegant.model.jooq.tables.pojos.Directory;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Hooks;
@@ -40,10 +42,19 @@ public class BookSyncTest {
     public void setup() {
         String root = getPath("book/pdf").toString();
         jdbcTemplate.update("insert into property(prop_name, prop_value) values ('app.directory.root', ?)", root);
+
         Hooks.onOperatorDebug();
     }
 
+    @After
+    public void teardown() {
+        jdbcTemplate.execute("delete from directory");
+        jdbcTemplate.execute("delete from directory_path");
+        jdbcTemplate.execute("delete from property");
+    }
+
     @Test
+    @Rollback
     public void testSyncOsFile2Db() {
         bookService.syncOsFile2Db().block();
 
@@ -61,12 +72,13 @@ public class BookSyncTest {
         assertThat(subDirs.get(1).getName()).isEqualTo("dir3");
 
         assertThat(jdbcTemplate.queryForList("select * from book").size()).isEqualTo(6);
-        assertThat(jdbcTemplate.queryForList("select * from book_cover").size()).isEqualTo(5);
+        assertThat(jdbcTemplate.queryForList("select * from book_cover").size()).isEqualTo(6);
         assertThat(jdbcTemplate.queryForList("select * from directory").size()).isEqualTo(7);
         assertThat(jdbcTemplate.queryForList("select * from directory_path").size()).isEqualTo(19);
     }
 
     @Test
+    @Rollback
     public void testAddBookCoverSuccess() throws IOException {
         Book book = new Book()
                 .setDirId(1)
@@ -85,19 +97,5 @@ public class BookSyncTest {
             ImageReader reader = iterator.next();
             assertThat(reader.getFormatName()).isEqualTo("JPEG");
         }
-    }
-
-    @Test
-    public void testAddBookCoverFailed() {
-        Book book = new Book()
-                .setDirId(1)
-                .setTitle("The Art of Code")
-                .setFormat("pdf")
-                .setDirId(1);
-        bookService.addBook(book).block();
-        bookService.addBookCover(book).block();
-        BookCover cover = bookService.getBookCover(1).block();
-
-        assertThat(cover).isNull();
     }
 }

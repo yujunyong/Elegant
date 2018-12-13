@@ -36,19 +36,37 @@ public class PropertyService {
 
 //    @Cacheable("property")
     public Flux<Property> getProperties() {
-        return Flux.fromIterable(propertyRepository.findAll())
-                .subscribeOn(elastic());
+        return Flux.fromIterable(propertyRepository.findAll());
     }
 
 //    @Cacheable("property")
     public Mono<Property> getProperty(String propName) {
         return Mono.just(propName)
-                .flatMap(id -> Mono.justOrEmpty(propertyRepository.fetchOneByPropName(propName)))
-                .subscribeOn(elastic());
+                .flatMap(id -> Mono.justOrEmpty(propertyRepository.fetchOneByPropName(propName)));
+    }
+
+    public Mono<String> getString(String propName, String defaultValue) {
+        return getString(propName).defaultIfEmpty(defaultValue);
     }
 
     public Mono<String> getString(String propName) {
         return getProperty(propName).map(Property::getPropValue);
+    }
+
+    public Mono<Integer> getInteger(String propName, Integer defaultValue) {
+        return getInteger(propName).defaultIfEmpty(defaultValue);
+    }
+
+    public Mono<Integer> getInteger(String propName) {
+        return getString(propName).map(Integer::parseInt);
+    }
+
+    public Mono<Boolean> getBoolean(String propName, Boolean defaultValue) {
+        return getBoolean(propName).defaultIfEmpty(defaultValue);
+    }
+
+    public Mono<Boolean> getBoolean(String propName) {
+        return getString(propName).map(Boolean::parseBoolean);
     }
 
 //    @CacheEvict(value = "property", key = "#property.propName")
@@ -58,7 +76,6 @@ public class PropertyService {
                 .doOnNext(p -> p.setUpdateTime(LocalDateTime.now()))
                 .doOnNext(propertyRepository::update)
                 .doOnNext(p -> publisher.publishEvent(new AddPropertyEvent(property)))
-                .subscribeOn(elastic())
                 .then();
     }
 
@@ -67,7 +84,6 @@ public class PropertyService {
         return Mono.just(property)
                 .doOnNext(propertyRepository::insert)
                 .doOnNext(p -> publisher.publishEvent(new UpdatePropertyEvent(property)))
-                .subscribeOn(elastic())
                 .then();
     }
 
@@ -76,7 +92,6 @@ public class PropertyService {
     public Mono<Void> deleteProperty(String propName) {
         return Mono.just(propName)
                 .doOnNext(propertyRepository::deleteById)
-                .subscribeOn(elastic())
                 .then();
     }
 }

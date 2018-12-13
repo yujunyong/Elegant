@@ -100,7 +100,7 @@ public class DirectoryService {
                 }
             }
         }
-        return Mono.justOrEmpty(root);
+        return Mono.just(root);
     }
 
     @Transactional

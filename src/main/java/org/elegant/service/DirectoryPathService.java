@@ -24,14 +24,12 @@ public class DirectoryPathService {
 
     public Flux<DirectoryPath> getAncestors(Integer dirId) {
         return Mono.just(dirId)
-                .flatMapIterable(id -> directoryPathRepository.fetchAncestors(id))
-                .subscribeOn(elastic());
+                .flatMapIterable(id -> directoryPathRepository.fetchAncestors(id));
     }
 
     public Mono<Void> addDirectoryPath(DirectoryPath path) {
         return Mono.just(path)
                 .doOnNext(directoryPathRepository::insert)
-                .subscribeOn(elastic())
                 .then();
     }
 
@@ -39,7 +37,6 @@ public class DirectoryPathService {
         return Flux.fromArray(paths)
                 .buffer(200)
                 .doOnNext(directoryPathRepository::insert)
-                .subscribeOn(elastic())
                 .then();
     }
 
@@ -47,7 +44,6 @@ public class DirectoryPathService {
         return Flux.fromIterable(paths)
                 .buffer(200)
                 .doOnNext(directoryPathRepository::insert)
-                .subscribeOn(elastic())
                 .then();
     }
 }

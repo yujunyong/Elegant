@@ -19,7 +19,6 @@ public class MediaService {
 
     public Mono<BookCover> getBookCover(Integer bookId) {
         return Mono.just(bookId)
-                .flatMap(id -> bookService.getBookCover(bookId))
-                .subscribeOn(elastic());
+                .flatMap(id -> bookService.getBookCover(bookId));
     }
 }

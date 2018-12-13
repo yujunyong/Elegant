@@ -14,11 +14,16 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.event.ApplicationEventMulticaster;
+import org.springframework.context.event.SimpleApplicationEventMulticaster;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import reactor.core.publisher.Hooks;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.Executors;
 
 @Configuration
 public class AppConfig implements InitializingBean {
@@ -43,6 +48,15 @@ public class AppConfig implements InitializingBean {
         settings.setQueryTimeout(10);
         settings.setFetchSize(1000);
         return settings;
+    }
+
+    @Bean
+    public ApplicationEventMulticaster applicationEventMulticaster() {
+        SimpleApplicationEventMulticaster eventMulticaster
+                = new SimpleApplicationEventMulticaster();
+
+        eventMulticaster.setTaskExecutor(Executors.newCachedThreadPool());
+        return eventMulticaster;
     }
 
     @Override

@@ -15,7 +15,7 @@
     </parent>
 
     <properties>
-        <itext.version>7.1.2</itext.version>
+        <itext.version>5.5.13</itext.version>
         <db.driver>org.h2.Driver</db.driver>
         <db.url>jdbc:h2:~/elegant;DATABASE_TO_UPPER=false</db.url>
         <db.username>sa</db.username>
@@ -64,24 +64,23 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>test</scope>
         </dependency>
 
 
         <!-- ===================== -->
         <!-- tool -->
         <!-- ===================== -->
-        <dependency>
-            <groupId>io.reactivex.rxjava2</groupId>
-            <artifactId>rxjava</artifactId>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-quartz</artifactId>
@@ -116,18 +115,13 @@
         <!-- 处理pdf -->
         <dependency>
             <groupId>com.itextpdf</groupId>
-            <artifactId>kernel</artifactId>
+            <artifactId>itextpdf</artifactId>
             <version>${itext.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>io</artifactId>
-            <version>${itext.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>layout</artifactId>
-            <version>${itext.version}</version>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>2.0.4</version>
         </dependency>
 
         <!-- 处理图片 -->
