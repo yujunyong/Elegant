@@ -56,7 +56,7 @@ public class BookSyncTest {
     @Test
     @Rollback
     public void testSyncOsFile2Db() {
-        bookService.syncOsFile2Db().block();
+        List<Integer> dirIds = bookService.syncOsFile2Db().collectList().block();
 
         // 检查根目录
         List<Book> books = bookService.getBooksByDirId(1).collectList().block();

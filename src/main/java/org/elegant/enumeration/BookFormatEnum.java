@@ -2,6 +2,7 @@ package org.elegant.enumeration;
 
 import com.google.common.collect.Lists;
 
+import java.nio.file.Path;
 import java.util.List;
 
 public enum BookFormatEnum {
@@ -31,5 +32,13 @@ public enum BookFormatEnum {
 
     public void setFormat(String format) {
         this.format = format;
+    }
+
+    public boolean isMatch(String filename) {
+        return getFileExtension().stream().anyMatch(filename::endsWith);
+    }
+
+    public boolean isMatch(Path path) {
+        return getFileExtension().stream().anyMatch(extention -> path.toString().endsWith(extention));
     }
 }

@@ -17,6 +17,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuple2;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -28,8 +30,11 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.elegant.enumeration.BookFormatEnum.PDF;
@@ -127,9 +132,9 @@ public class BookService {
             PDDocument document = null;
             try {
                 document = PDDocument.load(path.toFile());
-                PDFRenderer renderer = new PDFRenderer(document);
-                BufferedImage image = renderer.renderImage(0);
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                var renderer = new PDFRenderer(document);
+                var image = renderer.renderImage(0);
+                var out = new ByteArrayOutputStream();
                 ImageIO.write(image, BOOK_COVER_THUMBNAILATOR_FORMAT, out);
 
                 BookCover bookCover = new BookCover();
@@ -153,44 +158,63 @@ public class BookService {
         }).doOnNext(consumer).then();
     }
 
-    public Mono<Void> syncOsFile2Db() {
+    public Flux<Integer> syncOsFile2Db() {
         return directoryService.getRootDirectory()
                 .map(Directory::getDirId)
-                .flatMap(dirId -> {
-                    logger.info("=========== start sync dir({}) ============", dirId);
-                    return syncOsFile2Db(dirId)
-                            .doOnSuccess(v -> logger.info("=========== complte sync dir({}) ==============", dirId));
-                });
+                .doOnSubscribe(s -> logger.info("start sync all books"))
+                .flatMapMany(this::syncOsFile2Db)
+                .doOnComplete(() -> logger.info("sync all books finished"));
     }
 
-    public Mono<Void> syncOsFile2Db(Integer dirId) {
-        return directoryService.getOsPath(dirId).flatMap(path -> {
-            // 同步book, 新增, 更新book
-            Mono<Void> bookComplete = getBooksByDirId(dirId)
-                    .collectMap(Book::getTitle)
-                    .flatMap(books -> fileService.getFiles(path, f -> PDF.getFileExtension().stream().anyMatch(extention -> f.toString().endsWith(extention)))
-                        .filter(file -> !books.containsKey(getTitle(file.getFileName().toString())))
-                        .map(file -> {
-                            Book book = new Book();
-                            String fileName = file.getFileName().toString();
-                            book.setTitle(getTitle(fileName));
-                            book.setDirId(dirId);
-                            book.setFormat(PDF.getFormat());
-                            return book;
-                        })
-                        .buffer(200)
-                        .flatMap(bs -> addBook(bs).thenMany(Flux.fromIterable(bs)).flatMap(this::addBookCover))
-                        .then());
+    public Flux<Integer> syncOsFile2Db(Integer dirId) {
+        // 同步book, 新增, 更新book
+        var syncBook = new CompletableFuture<Integer>();
+        syncBooks(dirId)
+                .subscribeOn(Schedulers.parallel())
+                .subscribe(book -> this.addBookCover(book).subscribe(), syncBook::completeExceptionally, () -> syncBook.complete(dirId));
 
-            // 同步子文件夹下数据
-            Mono<Void> subDirsComplete = fileService.getSubDirs(path)
-                    .flatMap(dir -> directoryService.addDirectoryIfAbsent(dirId, dir.getFileName().toString()))
-                    .map(Directory::getDirId)
-                    .flatMap(this::syncOsFile2Db)
-                    .then();
+        // 同步子文件夹下数据
+        var syncSubDirs = new CompletableFuture<List<Integer>>();
+        directoryService.getOsPath(dirId)
+                .flatMapMany(path -> fileService.getSubDirs(path))
+                .flatMap(dir -> directoryService.addDirectoryIfAbsent(dirId, dir.getFileName().toString()))
+                .map(Directory::getDirId)
+                .flatMap(this::syncOsFile2Db)
+                .collectList()
+                .doOnSuccessOrError((dirIds, t) -> {
+                    if (Objects.nonNull(t)) {
+                        syncSubDirs.completeExceptionally(t);
+                    } else {
+                        syncSubDirs.complete(dirIds);
+                    }
+                })
+                .subscribe();
 
-            return bookComplete.concatWith(subDirsComplete).then();
-        });
+        return Mono.fromFuture(syncBook.thenCombine(syncSubDirs,
+                (parentDirId, dirIds) -> {dirIds.add(parentDirId); return dirIds;}))
+                .flatMapMany(Flux::fromIterable);
+    }
+
+    public Flux<Book> syncBooks(Integer dirId) {
+        return getBooksByDirId(dirId)
+                .collectMap(Book::getTitle)
+                .flatMapMany(books ->
+                    directoryService.getOsPath(dirId)
+                            .flatMapMany(path -> fileService.getFiles(path, PDF::isMatch))
+                            .doOnSubscribe(s -> logger.info("start sync dir({}) books", dirId))
+                            .filter(path -> !books.containsKey(getTitle(path.getFileName().toString())))
+                            .map(path -> {
+                                Book book = new Book();
+                                String fileName = path.getFileName().toString();
+                                book.setTitle(getTitle(fileName));
+                                book.setDirId(dirId);
+                                book.setFormat(PDF.getFormat());
+                                return book;
+                            })
+                            .buffer(200)
+                            .doOnNext(bs -> this.addBook(bs).subscribe())
+                            .doOnComplete(() -> logger.info("sync dir({}) finished", dirId))
+                            .flatMap(Flux::fromIterable));
     }
 
     private String getTitle(String fileName) {
@@ -199,7 +223,6 @@ public class BookService {
 
     public Mono<Void> addBook(Collection<Book> books) {
         return Flux.fromIterable(books)
-                .buffer(200)
                 .doOnNext(bookRepository::insert)
                 .then();
     }
