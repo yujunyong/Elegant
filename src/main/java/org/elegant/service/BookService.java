@@ -10,6 +10,7 @@ import org.elegant.model.jooq.tables.pojos.Directory;
 import org.elegant.model.jooq.tables.pojos.Property;
 import org.elegant.repository.BookCoverRepository;
 import org.elegant.repository.BookRepository;
+import org.elegant.web.controller.dto.request.BookQuerier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +35,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.elegant.enumeration.BookFormatEnum.PDF;
@@ -70,6 +70,10 @@ public class BookService {
         checkNotNull(title);
 
         return Mono.justOrEmpty(bookRepository.fetchOneByDirIdAndTitle(dirId, title));
+    }
+
+    public Flux<Book> queryBook(BookQuerier querier) {
+        return Flux.fromIterable(bookRepository.queryBook(querier));
     }
 
     public Mono<BookCover> getBookCover(Integer bookId) {

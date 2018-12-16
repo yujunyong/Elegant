@@ -1,6 +1,10 @@
 spring:
   flyway:
     locations: classpath:db/migration/{vendor}
+  webflux:
+    date-format: yyyy-MM-dd
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
   datasource:
     url: jdbc:mysql://${database.host}:${database.port:3306}/${database.schema.name}?useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true&useSSL=false
     username: ${database.username}

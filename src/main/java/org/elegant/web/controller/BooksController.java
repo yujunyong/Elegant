@@ -3,6 +3,7 @@ package org.elegant.web.controller;
 import org.elegant.model.jooq.tables.pojos.Book;
 import org.elegant.service.BookService;
 import org.elegant.web.controller.dto.request.AddBookRequest;
+import org.elegant.web.controller.dto.request.BookQuerier;
 import org.elegant.web.controller.dto.request.UpdateBookRequest;
 import org.elegant.web.controller.dto.response.BookResponse;
 import org.springframework.beans.BeanUtils;
@@ -22,13 +23,12 @@ public class BooksController {
     }
 
     @GetMapping()
-    public Flux<BookResponse> getBooks() {
-        // todo seek分页
-        return null;
+    public Flux<BookResponse> getBooks(BookQuerier querier) {
+        return bookService.queryBook(querier).map(this::convert2BookResponse);
     }
 
     @PostMapping()
-    public Mono<Void> addBook(@RequestBody  AddBookRequest request) {
+    public Mono<Void> addBook(@RequestBody AddBookRequest request) {
         // todo 添加封面数据
         Book book = new Book();
         BeanUtils.copyProperties(request, book);
