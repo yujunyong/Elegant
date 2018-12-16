@@ -65,7 +65,6 @@ public class BooksController {
 
         @DeleteMapping
         public Mono<Void> deleteBook(@PathVariable("bookId") Integer bookId) {
-            // todo 删除封面, 文件夹路径
             return bookService.deleteBook(bookId);
         }
     }

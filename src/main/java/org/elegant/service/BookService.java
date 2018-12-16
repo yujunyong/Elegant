@@ -247,6 +247,7 @@ public class BookService {
     public Mono<Void> deleteBook(Integer bookId) {
         return Mono.just(bookId)
                 .doOnNext(bookRepository::deleteById)
+                .doOnNext(bookCoverRepository::deleteById)
                 .then();
     }
 

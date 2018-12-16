@@ -22,4 +22,8 @@ public enum ImageEnum {
     public void setFileExtension(List<String> fileExtension) {
         this.fileExtension = fileExtension;
     }
+
+    public boolean isMatch(String extension) {
+        return getFileExtension().contains(extension);
+    }
 }

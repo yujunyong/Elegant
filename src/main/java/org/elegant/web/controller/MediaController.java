@@ -24,12 +24,9 @@ public class MediaController {
 
     @GetMapping(value = "/book-cover/{bookId}")
     public Mono<ResponseEntity> cover(@PathVariable Integer bookId) {
-        //todo 添加默认封面图片
-        //todo 优化大图片sql查询慢的问题
-        //todo 优化浏览器不缓存图片的问题
         return mediaService.getBookCover(bookId)
                 .map(cover -> {
-                    MediaType mediaType = JPG.getFileExtension().contains(cover.getImageFileExtension()) ?
+                    MediaType mediaType = JPG.isMatch(cover.getImageFileExtension()) ?
                             MediaType.IMAGE_JPEG :
                             MediaType.IMAGE_PNG;
 
