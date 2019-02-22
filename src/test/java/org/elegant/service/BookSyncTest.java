@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.junit4.SpringRunner;
 import reactor.core.publisher.Hooks;
 
@@ -28,7 +29,7 @@ import static org.elegant.util.FileUtil.getPath;
 @RunWith(SpringRunner.class)
 @Sql("classpath:sql/root-directories-init.sql")
 @SpringBootTest
-public class BookSyncTest {
+public class BookSyncTest extends AbstractTransactionalJUnit4SpringContextTests {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -46,15 +47,7 @@ public class BookSyncTest {
         Hooks.onOperatorDebug();
     }
 
-    @After
-    public void teardown() {
-        jdbcTemplate.execute("delete from directory");
-        jdbcTemplate.execute("delete from directory_path");
-        jdbcTemplate.execute("delete from property");
-    }
-
     @Test
-    @Rollback
     public void testSyncOsFile2Db() {
         List<Integer> dirIds = bookService.syncOsFile2Db().collectList().block();
 
@@ -78,13 +71,12 @@ public class BookSyncTest {
     }
 
     @Test
-    @Rollback
     public void testAddBookCoverSuccess() throws IOException {
         Book book = new Book()
                 .setDirId(1)
                 .setTitle("Vuex Concepts The Flux Application Architecture for Vue.js")
                 .setFormat("pdf")
-                .setDirId(1);
+                .setBookId(1);
         bookService.addBook(book).block();
         bookService.addBookCover(book).block();
         BookCover cover = bookService.getBookCover(1).block();

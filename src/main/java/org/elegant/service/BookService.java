@@ -174,7 +174,7 @@ public class BookService {
         // 同步book, 新增, 更新book
         var syncBook = new CompletableFuture<Integer>();
         syncBooks(dirId)
-                .subscribeOn(Schedulers.parallel())
+//                .subscribeOn(Schedulers.parallel())
                 .subscribe(book -> this.addBookCover(book).subscribe(), syncBook::completeExceptionally, () -> syncBook.complete(dirId));
 
         // 同步子文件夹下数据

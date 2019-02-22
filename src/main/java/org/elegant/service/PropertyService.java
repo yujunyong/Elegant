@@ -75,7 +75,7 @@ public class PropertyService {
         return Mono.just(property)
                 .doOnNext(p -> p.setUpdateTime(LocalDateTime.now()))
                 .doOnNext(propertyRepository::update)
-                .doOnNext(p -> publisher.publishEvent(new AddPropertyEvent(property)))
+                .doOnNext(p -> publisher.publishEvent(new UpdatePropertyEvent(property)))
                 .then();
     }
 
@@ -83,7 +83,7 @@ public class PropertyService {
     public Mono<Void> addProperty(Property property) {
         return Mono.just(property)
                 .doOnNext(propertyRepository::insert)
-                .doOnNext(p -> publisher.publishEvent(new UpdatePropertyEvent(property)))
+                .doOnNext(p -> publisher.publishEvent(new AddPropertyEvent(property)))
                 .then();
     }
 

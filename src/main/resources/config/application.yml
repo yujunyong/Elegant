@@ -9,14 +9,6 @@ spring:
     url: jdbc:mysql://${database.host}:${database.port:3306}/${database.schema.name}?useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true&useSSL=false
     username: ${database.username}
     password: ${database.password}
-  quartz:
-    job-store-type: jdbc
-    jdbc:
-      initialize-schema: always
-    properties:
-      org.quartz.plugin.jobHistory.class: org.quartz.plugins.history.LoggingJobHistoryPlugin
-      org.quartz.scheduler.instanceId: AUTO
-      org.quartz.jobStore.isClustered: false
   messages:
     basename: message/app-message
 
